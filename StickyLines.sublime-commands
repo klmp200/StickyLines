@@ -1,0 +1,32 @@
+[
+    {
+        "caption": "Preferences: StickyLines Settings",
+        "command": "edit_settings",
+        "args":
+        {
+            "base_file": "${packages}/StickyLines/StickyLines.sublime-settings",
+            "default": "{\n\t$0\n}\n"
+        }
+    },
+    {
+        "caption": "Preferences: StickyLines Key Bindings",
+        "command": "edit_settings",
+        "args":
+        {
+            "base_file": "${packages}/StickyLines/Default (${platform}).sublime-keymap",
+            "default": "[\n\t$0\n]\n"
+        }
+    },
+    {
+        "caption": "StickyLines: Open Readme",
+        "command": "open_file",
+        "args":
+        {
+            "file": "${packages}/StickyLines/README.md"
+        }
+    },
+    {
+      "caption": "StickyLines: Toggle",
+      "command": "sticky_lines_toggle"
+    }
+]
