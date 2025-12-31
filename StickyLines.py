@@ -32,7 +32,7 @@ class SyncManager:
     def __init__(self):
         self._is_running = False
         self._thread: Optional[Thread] = None
-        self._last_states: Dict[sublime.View, sublime.Region] = {}
+        self._last_states: Dict[sublime.View, int] = {}
 
     def start(self):
         for window in sublime.windows():
@@ -54,26 +54,29 @@ class SyncManager:
         if not is_plugin_enabled(view):
             return
 
-        last_region = self._last_states.get(view, None)
-        visible_region = view.visible_region()
-
-        if last_region and visible_region == last_region:
+        if self.is_phantom_on_top(view, self._last_states.get(view)):
             return
 
-        self._last_states[view] = visible_region
+        self._last_states[view] = display_lines(view)
 
-        display_lines(view)
+    def is_phantom_on_top(self, view: sublime.View, phantom_id: Optional[int]) -> bool:
+        if phantom_id is None:
+            return False
+
+        regions = view.query_phantom(phantom_id)
+        if not regions:
+            return False
+
+        return regions[0] == view.visible_region()
+
 
     def run(self):
         sublime.active_window().status_message("StickyLines started")
         self._is_running = True
         while self._is_running:
-            view = sublime.active_window().active_view()
-            if not view:
-                continue
-
-            self._handle_view(view)
-            sleep(0.3)
+            for view in sublime.active_window().views(include_transient=True):
+                self._handle_view(view)
+                sleep(0.3)
 
         for window in sublime.windows():
             for view in window.views():
@@ -171,7 +174,7 @@ def create_phantom_content(view: sublime.View, stack: List[Symbol]) -> str:
 def hide_lines(view: sublime.View):
     view.erase_phantoms(PHANTOM_KEY)
 
-def display_lines(view: sublime.View):
+def display_lines(view: sublime.View) -> int:
     viewport = view.visible_region()
     stack = get_symbol_stack(view, viewport)
 
@@ -180,7 +183,7 @@ def display_lines(view: sublime.View):
     if not stack:
         return
 
-    mdpopups.add_phantom(
+    return mdpopups.add_phantom(
         view=view,
         key=PHANTOM_KEY,
         region=viewport,
