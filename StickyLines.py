@@ -10,22 +10,40 @@ import sublime_plugin
 
 PHANTOM_KEY = "STICKY_LINES"
 sync_manager: Optional[SyncManager] = None
+settings: sublime.Settings = None
 
 def plugin_loaded():
-    global sync_manager
+    global sync_manager, settings
+    settings = sublime.load_settings("StickyLines.sublime-settings")
 
-    sync_manager = SyncManager()
-    sync_manager.start()
+    sync_manager = None
+    if is_plugin_auto_follow_enabled():
+        sync_manager = SyncManager()
+        sync_manager.start()
 
 def plugin_unloaded():
     if sync_manager:
         sync_manager.stop()
 
-def is_plugin_enabled(view: sublime.View) -> bool:
-    return bool(view.settings().get("sticky_lines_enabled", True))
+def is_plugin_auto_follow_enabled() -> bool:
+    return bool(settings.get("sticky_lines_auto_follow", True))
 
-def set_is_plugin_enabled(view: sublime.View, enabled: bool):
-    view.settings().set("sticky_lines_enabled", enabled)
+def set_is_plugin_auto_follow_enabled(enabled: bool):
+    settings.set("sticky_lines_auto_follow", enabled)
+    sublime.save_settings("StickyLines.sublime-settings")
+
+def is_plugin_enabled_globally() -> bool:
+    return bool(settings.get("sticky_lines_enabled_globally", True))
+
+def set_is_plugin_enabled_globally(enabled: bool):
+    settings.set("sticky_lines_enabled_globally", enabled)
+    sublime.save_settings("StickyLines.sublime-settings")
+
+def is_plugin_enabled_on_view(view: sublime.View) -> bool:
+    return bool(view.settings().get("sticky_lines_enabled_on_view", is_plugin_enabled_globally()))
+
+def set_is_plugin_enabled_on_view(view: sublime.View, enabled: bool):
+    view.settings().set("sticky_lines_enabled_on_view", enabled)
 
 @dataclass
 class Phantom:
@@ -88,7 +106,8 @@ class SyncManager:
         self._thread = None
 
     def _handle_view(self, view: sublime.View):
-        if not is_plugin_enabled(view):
+        if not is_plugin_enabled_on_view(view):
+            hide_lines(view)
             return
 
         old_phantom = self._last_states.get(view)
@@ -227,28 +246,39 @@ def display_lines(view: sublime.View) -> Optional[Phantom]:
         view=view,
     )
 
-class StickyLinesToggleCommand(sublime_plugin.TextCommand):
+class StickyLinesToggleOnViewCommand(sublime_plugin.TextCommand):
     def name(self) -> str:
-        return "sticky_lines_toggle"
+        return "sticky_lines_toggle_on_view"
 
     def run(self, *args, **kwargs):
-        set_is_plugin_enabled(self.view, not is_plugin_enabled(self.view))
-        if is_plugin_enabled(self.view):
-            display_lines(self.view)
-            sublime.active_window().status_message("StickyLines enabled")
+        set_is_plugin_enabled_on_view(self.view, not is_plugin_enabled_on_view(self.view))
+        if is_plugin_enabled_on_view(self.view):
+            sublime.active_window().status_message("StickyLines enabled on this view")
         else:
-            hide_lines(self.view)
-            sublime.active_window().status_message("StickyLines disabled")
+            sublime.active_window().status_message("StickyLines disabled on this view")
 
-# class ViewListener(sublime_plugin.ViewEventListener):
+class StickyLinesToggleGloballyCommand(sublime_plugin.ApplicationCommand):
+    def name(self) -> str:
+        return "sticky_lines_toggle_globally"
 
-#     # We can't be async, this creates jittering otherwise
-#     # def on_selection_modified(self):
-#     #     display_lines(self.view)
+    def run(self):
+        set_is_plugin_enabled_globally(not is_plugin_enabled_globally())
+        if is_plugin_enabled_globally():
+            sublime.active_window().status_message("StickyLines enabled globally")
+        else:
+            sublime.active_window().status_message("StickyLines disabled globally")
 
-#     def on_activated(self):
-#         display_lines(self.view)
+class StickyLinesToggleAutoFollowCommand(sublime_plugin.ApplicationCommand):
+    def name(self) -> str:
+        return "sticky_lines_toggle_auto_follow"
 
-#     @classmethod
-#     def is_applicable(self, settings: sublime.Settings) -> bool:
-#         return bool(settings.get("sticky_lines_enabled", True))
+    def run(self):
+        global sync_manager
+        set_is_plugin_auto_follow_enabled(not is_plugin_auto_follow_enabled())
+        if sync_manager:
+            sync_manager.stop()
+            sync_manager = None
+
+        if is_plugin_auto_follow_enabled():
+            sync_manager = SyncManager()
+            sync_manager.start()

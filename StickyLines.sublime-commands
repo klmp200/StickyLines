@@ -26,7 +26,15 @@
         }
     },
     {
-      "caption": "StickyLines: Toggle",
-      "command": "sticky_lines_toggle"
+      "caption": "StickyLines: Toggle on View",
+      "command": "sticky_lines_toggle_on_view"
+    },
+    {
+      "caption": "StickyLines: Toggle Globally",
+      "command": "sticky_lines_toggle_globally"
+    },
+    {
+      "caption": "StickyLines: Toggle Auto Follow",
+      "command": "sticky_lines_toggle_auto_follow"
     }
 ]
