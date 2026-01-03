@@ -21,9 +21,31 @@ def plugin_loaded():
         sync_manager = SyncManager()
         sync_manager.start()
 
+    settings.add_on_change("enable_globally", _update_enable_globally_callback)
+    settings.add_on_change("auto_follow", _update_auto_follow_callback)
+
 def plugin_unloaded():
     if sync_manager:
         sync_manager.stop()
+
+    settings.clear_on_change("enable_globally")
+    settings.clear_on_change("auto_follow")
+
+def _update_enable_globally_callback():
+    if is_plugin_enabled_globally():
+        sublime.active_window().status_message("StickyLines enabled globally")
+    else:
+        sublime.active_window().status_message("StickyLines disabled globally")
+
+def _update_auto_follow_callback():
+    global sync_manager
+    if sync_manager:
+        sync_manager.stop()
+        sync_manager = None
+
+    if is_plugin_auto_follow_enabled():
+        sync_manager = SyncManager()
+        sync_manager.start()
 
 def is_plugin_auto_follow_enabled() -> bool:
     return bool(settings.get("sticky_lines_auto_follow", True))
@@ -283,22 +305,10 @@ class StickyLinesToggleGloballyCommand(sublime_plugin.ApplicationCommand):
 
     def run(self):
         set_is_plugin_enabled_globally(not is_plugin_enabled_globally())
-        if is_plugin_enabled_globally():
-            sublime.active_window().status_message("StickyLines enabled globally")
-        else:
-            sublime.active_window().status_message("StickyLines disabled globally")
 
 class StickyLinesToggleAutoFollowCommand(sublime_plugin.ApplicationCommand):
     def name(self) -> str:
         return "sticky_lines_toggle_auto_follow"
 
     def run(self):
-        global sync_manager
         set_is_plugin_auto_follow_enabled(not is_plugin_auto_follow_enabled())
-        if sync_manager:
-            sync_manager.stop()
-            sync_manager = None
-
-        if is_plugin_auto_follow_enabled():
-            sync_manager = SyncManager()
-            sync_manager.start()
