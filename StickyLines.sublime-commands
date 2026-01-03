@@ -29,7 +29,7 @@
       "command": "sticky_lines_toggle_auto_follow"
     },
     {
-      "caption": "StickyLines: Show popup",
+      "caption": "StickyLines: Show Popup",
       "command": "sticky_lines_show_popup"
     }
 ]
