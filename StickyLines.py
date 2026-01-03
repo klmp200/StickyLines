@@ -1,9 +1,9 @@
 from __future__ import annotations
-from time import sleep
+from time import sleep, monotonic
 from threading import Thread
 from functools import lru_cache
-from typing import List, Optional, Tuple, Dict
-from dataclasses import dataclass
+from typing import List, Optional, Tuple, Dict, Union
+from dataclasses import dataclass, field
 import mdpopups
 import sublime
 import sublime_plugin
@@ -27,12 +27,49 @@ def is_plugin_enabled(view: sublime.View) -> bool:
 def set_is_plugin_enabled(view: sublime.View, enabled: bool):
     view.settings().set("sticky_lines_enabled", enabled)
 
+@dataclass
+class Phantom:
+    HISTERISIS_S = 1
+
+    pid: int
+    view: sublime.View
+    _last_check: Union[float, int] = field(default_factory=monotonic)
+    _last_checked_position: Optional[sublime.Region] = field(init=False)
+
+    def __post_init__(self):
+        self._last_checked_position = self.position
+
+    @property
+    def position(self) -> Optional[sublime.Region]:
+        position = self.view.query_phantom(self.pid)
+        if not position:
+            return None
+
+        return position[0]
+
+    @property
+    def is_on_top(self) -> bool:
+        return self.position == self.view.visible_region()
+
+    @property
+    def is_stabilized(self) -> bool:
+        print(f"{self._last_check + self.HISTERISIS_S} - {monotonic()}: {self._last_check + self.HISTERISIS_S < monotonic()}")
+        return self._last_checked_position == self.position and self._last_check + self.HISTERISIS_S < monotonic()
+
+    def mark_checked(self):
+        current_position = self.position
+        if current_position == self._last_checked_position:
+            return
+
+        self._last_checked_position = current_position
+        self._last_check = monotonic()
+
 class SyncManager:
     """In charge of detecting viewport changes"""
     def __init__(self):
         self._is_running = False
         self._thread: Optional[Thread] = None
-        self._last_states: Dict[sublime.View, int] = {}
+        self._last_states: Dict[sublime.View, Phantom] = {}
 
     def start(self):
         for window in sublime.windows():
@@ -54,21 +91,16 @@ class SyncManager:
         if not is_plugin_enabled(view):
             return
 
-        if self.is_phantom_on_top(view, self._last_states.get(view)):
-            return
+        old_phantom = self._last_states.get(view)
+        if old_phantom:
+            if old_phantom.is_on_top:
+                return
+            if not old_phantom.is_stabilized:
+                old_phantom.mark_checked()
+                return
 
-        self._last_states[view] = display_lines(view)
-
-    def is_phantom_on_top(self, view: sublime.View, phantom_id: Optional[int]) -> bool:
-        if phantom_id is None:
-            return False
-
-        regions = view.query_phantom(phantom_id)
-        if not regions:
-            return False
-
-        return regions[0] == view.visible_region()
-
+        if (phantom := display_lines(view)):
+            self._last_states[view] = phantom
 
     def run(self):
         sublime.active_window().status_message("StickyLines started")
@@ -77,6 +109,7 @@ class SyncManager:
             for view in sublime.active_window().views(include_transient=True):
                 self._handle_view(view)
                 sleep(0.3)
+            sleep(0.3)
 
         for window in sublime.windows():
             for view in window.views():
@@ -174,7 +207,7 @@ def create_phantom_content(view: sublime.View, stack: List[Symbol]) -> str:
 def hide_lines(view: sublime.View):
     view.erase_phantoms(PHANTOM_KEY)
 
-def display_lines(view: sublime.View) -> int:
+def display_lines(view: sublime.View) -> Optional[Phantom]:
     viewport = view.visible_region()
     stack = get_symbol_stack(view, viewport)
 
@@ -183,12 +216,15 @@ def display_lines(view: sublime.View) -> int:
     if not stack:
         return
 
-    return mdpopups.add_phantom(
+    return Phantom(
+        pid=mdpopups.add_phantom(
+                view=view,
+                key=PHANTOM_KEY,
+                region=viewport,
+                content=create_phantom_content(view, stack),
+                layout=sublime.PhantomLayout.BLOCK,
+        ),
         view=view,
-        key=PHANTOM_KEY,
-        region=viewport,
-        content=create_phantom_content(view, stack),
-        layout=sublime.PhantomLayout.BLOCK,
     )
 
 class StickyLinesToggleCommand(sublime_plugin.TextCommand):
