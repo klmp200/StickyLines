@@ -246,6 +246,19 @@ def display_lines(view: sublime.View) -> Optional[Phantom]:
         view=view,
     )
 
+def display_popup(view: sublime.View):
+    selection = view.sel()
+    if not selection:
+        return
+
+    stack = get_symbol_stack(view, selection[0])
+
+    return mdpopups.show_popup(
+        view=view,
+        content=create_phantom_content(view, stack),
+        max_width=30000,
+    )
+
 class StickyLinesToggleOnViewCommand(sublime_plugin.TextCommand):
     def name(self) -> str:
         return "sticky_lines_toggle_on_view"
@@ -256,6 +269,13 @@ class StickyLinesToggleOnViewCommand(sublime_plugin.TextCommand):
             sublime.active_window().status_message("StickyLines enabled on this view")
         else:
             sublime.active_window().status_message("StickyLines disabled on this view")
+
+class StickyLinesShowPopupCommand(sublime_plugin.TextCommand):
+    def name(self) -> str:
+        return "sticky_lines_show_popup"
+
+    def run(self, *args, **kwargs):
+        display_popup(self.view)
 
 class StickyLinesToggleGloballyCommand(sublime_plugin.ApplicationCommand):
     def name(self) -> str:
