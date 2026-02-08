@@ -33,13 +33,13 @@ Note: context depth is tracked through indentation level. This won't work if you
 
 ### About performances and jitteriness
 
-There is no way in the Sublime API to react to viewport change. This means that this plugin requires a background thread to work.
+There is no way in the Sublime API to react to viewport change. This means that this plugin requires a periodic task to work.
 
 Impact on performances should be minimal but this is important to keep in mind.
 
 The lack of proper UI feature and the use of phantoms also creates some jittering effect on the text buffer. I tried to reduce it at a maximum with some stabilization features but it can only go so far.
 
-For all of this reasons, if you're only interested by the Popup feature or want to completely disable the background thread when not needing the plugin, you can set `sticky_lines_auto_follow` to `false` or type `StickyLines: Toggle Auto Follow` in the command palette (`sticky_lines_toggle_auto_follow` command).
+For all of this reasons, if you're only interested by the Popup feature or want to completely disable the background periodic task when not needing the plugin, you can set `sticky_lines_auto_follow` to `false` or type `StickyLines: Toggle Auto Follow` in the command palette (`sticky_lines_toggle_auto_follow` command).
 
 ### Usage
 
@@ -70,5 +70,5 @@ Press `cmd+shift+p`. Type `stickylines` to see available commands:
 
 | Preference                    | Description                                                                                                                                               | Default |
 |-------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|---------|
-| sticky_lines_auto_follow      | Enables auto follow thread   Disabling this settings basically disables sticky lines features   Other features like on demand context are still available | true    |
+| sticky_lines_auto_follow      | Enables auto follow periodic task   Disabling this settings basically disables sticky lines features   Other features like on demand context are still available | true    |
 | sticky_lines_enabled_globally | Default behavior of sticky lines on a view   This can be overridden on a per view basis                                                                   | true    |

@@ -1,6 +1,5 @@
 from __future__ import annotations
-from time import sleep, monotonic
-from threading import Thread
+from time import monotonic
 from functools import lru_cache
 from typing import List, Optional, Tuple, Dict, Union
 from dataclasses import dataclass, field
@@ -106,9 +105,10 @@ class Phantom:
 
 class SyncManager:
     """In charge of detecting viewport changes"""
+    PERIODIC_TASK_MS = 100
+
     def __init__(self):
         self._is_running = False
-        self._thread: Optional[Thread] = None
         self._last_states: Dict[sublime.View, Phantom] = {}
 
     def start(self):
@@ -116,16 +116,12 @@ class SyncManager:
             for view in window.views(include_transient=True):
                 self._handle_view(view)
 
-        self._thread = Thread(target=self.run)
-        self._thread.start()
+        sublime.active_window().status_message("StickyLines started")
+        self._is_running = True
+        sublime.set_timeout(self._periodic_task, self.PERIODIC_TASK_MS)
 
     def stop(self):
         self._is_running = False
-        try:
-            self._thread.join(1)
-        except RuntimeError:
-            sublime.error_message("Could not stop StickyLines thread")
-        self._thread = None
 
     def _handle_view(self, view: sublime.View):
         if not is_plugin_enabled_on_view(view):
@@ -143,19 +139,19 @@ class SyncManager:
         if (phantom := display_lines(view)):
             self._last_states[view] = phantom
 
-    def run(self):
-        sublime.active_window().status_message("StickyLines started")
-        self._is_running = True
-        while self._is_running:
-            for view in sublime.active_window().views(include_transient=True):
-                self._handle_view(view)
-                sleep(0.3)
-            sleep(0.3)
+    def _periodic_task(self):
+        if not self._is_running:
+            for window in sublime.windows():
+                for view in window.views():
+                    hide_lines(view)
+            sublime.active_window().status_message("StickyLines stopped")
+            return
 
-        for window in sublime.windows():
-            for view in window.views():
-                hide_lines(view)
-        sublime.active_window().status_message("StickyLines stopped")
+        for view in sublime.active_window().views(include_transient=True):
+            self._handle_view(view)
+
+
+        sublime.set_timeout(self._periodic_task, self.PERIODIC_TASK_MS)
 
 @dataclass(frozen=True)
 class Symbol:
