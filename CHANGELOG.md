@@ -1,6 +1,11 @@
 # Changelog
 
-## 1.1.0 - 2026-02-02
+## 1.1.1 - 2026-02-10
+
+- Adjust hysteresis time
+- Package control install instructions
+
+## 1.1.0 - 2026-02-08
 
 - Remove thread in favor of periodic task
 - Add Menu entry

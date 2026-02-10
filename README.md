@@ -11,7 +11,13 @@ This plugin requires Sublime Text >= 4132.
 
 ## Package Control
 
-Ongoing
+## Package Control
+
+The easiest way to install is using [Package Control](https://packages.sublimetext.io/). It's listed as `NeoCodeMap`.
+
+1. Open `Command Palette` using <kbd>ctrl+shift+P</kbd> (Linux/Windows) or <kbd>cmd+shift+P</kbd> (OSX) or menu item `Tools -> Command Palette...`.
+2. Choose `Package Control: Install Package`.
+3. Find `StickyLines` and hit <kbd>Enter</kbd>.
 
 ## Manual install
 
@@ -59,7 +65,7 @@ Note: this also relies on code being indented properly.
 
 # Command Palette
 
-Press `cmd+shift+p`. Type `stickylines` to see available commands:
+Press  <kbd>ctrl+shift+P</kbd> (Linux/Windows) or <kbd>cmd+shift+P</kbd> (OSX). Type `stickylines` to see available commands:
 
 * **Toggle Globally** (`sticky_lines_toggle_globally`): Change default enable behavior of the sticky scroll feature on all views.
 * **Toggle on View** (`sticky_lines_toggle_on_view`): Change enable behavior of the sticky scroll feature on the current view.

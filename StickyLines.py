@@ -68,7 +68,7 @@ def set_is_plugin_enabled_on_view(view: sublime.View, enabled: bool):
 
 @dataclass
 class Phantom:
-    HYSTERESIS_S = 0.5
+    HYSTERESIS_S = 0.7
 
     pid: int
     view: sublime.View
@@ -92,7 +92,6 @@ class Phantom:
 
     @property
     def is_stabilized(self) -> bool:
-        print(f"{self._last_check + self.HYSTERESIS_S} - {monotonic()}: {self._last_check + self.HYSTERESIS_S < monotonic()}")
         return self._last_checked_position == self.position and self._last_check + self.HYSTERESIS_S < monotonic()
 
     def mark_checked(self):
