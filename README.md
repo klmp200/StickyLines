@@ -11,8 +11,6 @@ This plugin requires Sublime Text >= 4132.
 
 ## Package Control
 
-## Package Control
-
 The easiest way to install is using [Package Control](https://packages.sublimetext.io/). It's listed as `NeoCodeMap`.
 
 1. Open `Command Palette` using <kbd>ctrl+shift+P</kbd> (Linux/Windows) or <kbd>cmd+shift+P</kbd> (OSX) or menu item `Tools -> Command Palette...`.
