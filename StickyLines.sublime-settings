@@ -7,4 +7,8 @@
 	// Default behavior of sticky lines on a view
 	// This can be overridden on a per view basis
 	"sticky_lines_enabled_globally": true,
+
+	// Time to wait before considering that the viewport
+	// has been stabilized. This might help with jittering
+	"sticky_lines_hysteresis_s": 0,
 }

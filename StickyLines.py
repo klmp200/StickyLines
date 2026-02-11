@@ -72,7 +72,7 @@ def get_first_line(view: sublime.View) -> int:
 
 @dataclass
 class Phantom:
-    HYSTERESIS_S = 0.7
+    DEFAULT_HYSTERESIS_S = 0.0
 
     pid: int
     view: sublime.View
@@ -81,6 +81,15 @@ class Phantom:
 
     def __post_init__(self):
         self._last_checked_position = self.position
+
+    @property
+    def hysteresis_s(self) -> float:
+        if not settings:
+            return self.DEFAULT_HYSTERESIS_S
+        try:
+            return float(str(settings.get("sticky_lines_hysteresis_s", self.DEFAULT_HYSTERESIS_S)))
+        except ValueError:
+            return self.DEFAULT_HYSTERESIS_S
 
     @property
     def position(self) -> Optional[sublime.Region]:
@@ -99,7 +108,7 @@ class Phantom:
 
     @property
     def is_stabilized(self) -> bool:
-        return self._last_checked_position == self.position and self._last_check + self.HYSTERESIS_S < monotonic()
+        return self._last_checked_position == self.position and self._last_check + self.hysteresis_s < monotonic()
 
     def mark_checked(self):
         current_position = self.position

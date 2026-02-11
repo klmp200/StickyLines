@@ -43,6 +43,8 @@ Impact on performances should be minimal but this is important to keep in mind.
 
 The lack of proper UI feature and the use of phantoms also creates some jittering effect on the text buffer. I tried to reduce it at a maximum with some stabilization features but it can only go so far.
 
+You can adapt the stabilization feature by tinkering with `sticky_lines_hysteresis_s`.
+
 For all of this reasons, if you're only interested by the Popup feature or want to completely disable the background periodic task when not needing the plugin, you can set `sticky_lines_auto_follow` to `false` or type `StickyLines: Toggle Auto Follow` in the command palette (`sticky_lines_toggle_auto_follow` command).
 
 ### Usage
@@ -76,3 +78,4 @@ Press  <kbd>ctrl+shift+P</kbd> (Linux/Windows) or <kbd>cmd+shift+P</kbd> (OSX). 
 |-------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|---------|
 | sticky_lines_auto_follow      | Enables auto follow periodic task   Disabling this settings basically disables sticky lines features   Other features like on demand context are still available | true    |
 | sticky_lines_enabled_globally | Default behavior of sticky lines on a view   This can be overridden on a per view basis                                                                   | true    |
+| sticky_lines_hysteresis_s | Time to wait before considering that the viewport has been stabilized. This might help with jittering                                                                   | 0    |
