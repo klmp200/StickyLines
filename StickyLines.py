@@ -66,6 +66,10 @@ def is_plugin_enabled_on_view(view: sublime.View) -> bool:
 def set_is_plugin_enabled_on_view(view: sublime.View, enabled: bool):
     view.settings().set("sticky_lines_enabled_on_view", enabled)
 
+def get_first_line(view: sublime.View) -> int:
+    # We send the next first line to avoid being off screen
+    return view.rowcol(view.visible_region().begin())[0] + 1
+
 @dataclass
 class Phantom:
     HYSTERESIS_S = 0.7
@@ -88,7 +92,10 @@ class Phantom:
 
     @property
     def is_on_top(self) -> bool:
-        return self.position == self.view.visible_region()
+        position = self.position
+        if not position:
+            return False
+        return self.view.rowcol(position.begin())[0] == get_first_line(self.view)
 
     @property
     def is_stabilized(self) -> bool:
@@ -244,7 +251,9 @@ def hide_lines(view: sublime.View):
     view.erase_phantoms(PHANTOM_KEY)
 
 def display_lines(view: sublime.View) -> Optional[Phantom]:
-    viewport = view.visible_region()
+
+    first_line = get_first_line(view)
+    viewport = view.line(view.text_point_utf8(first_line, 0))
     stack = get_symbol_stack(view, viewport)
 
     hide_lines(view)
